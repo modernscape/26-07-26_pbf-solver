@@ -90,7 +90,7 @@ geometry.setAttribute(
 
 // マテリアル (水のような青色)
 const material = new THREE.PointsMaterial({
-  color: 0x00aaff,
+  color: 0x00abff,
   size: 0.05,
   transparent: true,
   opacity: 0.8,
