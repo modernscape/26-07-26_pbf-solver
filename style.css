@@ -11,3 +11,13 @@ canvas {
   width: 100vw;
   height: 100vh;
 }
+
+span#msg {
+  position: absolute;
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  font-size: 12px;
+  padding-top: 5px;
+}
