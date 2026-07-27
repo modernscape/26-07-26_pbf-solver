@@ -26,7 +26,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   100,
 )
-camera.position.set(0, 3, 12)
+camera.position.set(0, 3, 10)
 
 // レンダラー
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -90,7 +90,7 @@ geometry.setAttribute(
 // マテリアル (水のような青色)
 const material = new THREE.PointsMaterial({
   color: 0x00abff,
-  size: 0.05,
+  size: 0.02,
   transparent: true,
   opacity: 0.8,
 })
