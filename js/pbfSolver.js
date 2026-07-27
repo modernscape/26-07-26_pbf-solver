@@ -6,13 +6,12 @@ export class PbfSolver {
 
     // PBF のパラメータ
     this.density0 = 6378.0 // 目標密度 (Rest density)
-    this.solverIterations = 3 // 制約ソルバーの反復回数
-    // this.dt = 0.016 // タイムステップ
-    this.dt = 0.05 // タイムステップ
+    this.solverIterations = 2 // 軽快に動かすため、反復回数を2回に最適化
+    this.dt = 0.03 // タイムステップ（少し広げて速度感をアップ）
     this.gravity = -9.81 // 重力加速度 (Y軸下向き)
     this.eps = 600.0 // 密度制約の安定化パラメータ
 
-    // 粘性パラメータ (XSPH Viscosity の係数: 0.0 ~ 0.1 程度)
+    // 粘性パラメータ (XSPH Viscosity の係数)
     this.c = 0.01
 
     // 境界ボックスのサイズ
@@ -68,7 +67,7 @@ export class PbfSolver {
 
     this.hash.update(pred, n)
 
-    // 2. 制約ソルバーのループ
+    // 2. 制約ソルバーのループ（流体粒子のみの純粋な非圧縮性計算）
     for (let iter = 0; iter < this.solverIterations; iter++) {
       for (let i = 0; i < n; i++) {
         const i3 = i * 3
@@ -174,7 +173,6 @@ export class PbfSolver {
     }
 
     // 3. XSPH 粘性 (Viscosity) の適用
-    // 粒子間の相対速度をなめらかに平均化し、過剰なバウンドや乱れを抑える
     for (let i = 0; i < n; i++) {
       const i3 = i * 3
       const px = pred[i3 + 0]
@@ -194,24 +192,20 @@ export class PbfSolver {
         const r = Math.sqrt(dx * dx + dy * dy + dz * dz)
 
         if (r < this.h) {
-          // Poly6 カーネルを使って重み付け
           const rSq = r * r
           const w = this._poly6(rSq)
-          // 速度の差分を加算
           vxCorr += (vel[j3 + 0] - vel[i3 + 0]) * w
           vyCorr += (vel[j3 + 1] - vel[i3 + 1]) * w
           vzCorr += (vel[j3 + 2] - vel[i3 + 2]) * w
         }
       })
 
-      // 補正速度を一時保存（あるいは後で速度に反映）
-      // ※ここでは簡易的に速度配列に直接加算するためのバッファとして扱います
       vel[i3 + 0] += this.c * vxCorr
       vel[i3 + 1] += this.c * vyCorr
       vel[i3 + 2] += this.c * vzCorr
     }
 
-    // 4. 速度と位置の確定、および壁の境界条件処理
+    // 4. 速度と位置の確定、および壁の境界条件（遅延のないスムーズな滑り処理）
     for (let i = 0; i < n; i++) {
       const i3 = i * 3
 
@@ -233,24 +227,21 @@ export class PbfSolver {
         vel[i3 + 0] *= -restitution
       }
 
-      // ★床面 (Y = -b) での入射角・速度変換処理
+      // ★床面 (Y = -b) でのダイレクトなスライド・広がり処理
       if (pred[i3 + 1] < -b) {
         pred[i3 + 1] = -b
 
-        // 衝突前の落下速度（下向きの勢い）を取得
         let vy = vel[i3 + 1]
         if (vy < 0) {
           const downSpeed = Math.abs(vy)
-          vy = 0.0 // 下向きの速度はストップ
+          vy = 0 // 下向きの速度をストップ
 
-          // すでに持っている横方向の勢い（入射角の方向）に、
-          // 落下エネルギー（downSpeed）の成分を乗算して横滑りを促す
+          // 落下エネルギーを横方向の推進力に変換してスムーズに広げる
           const slideBoost = 0.1
           vel[i3 + 0] += vel[i3 + 0] * slideBoost
           vel[i3 + 2] += vel[i3 + 2] * slideBoost
 
-          // もし完全に垂直に落ちてきて横方向の勢いがゼロ（vx=0, vz=0）の場合の救済として、
-          // わずかに中心から外側へ逃げるバイアスを足す（完全に静止するのを防ぐため）
+          // 完全に真下に落ちて横方向の勢いがゼロの場合のセーフティ
           if (Math.abs(vel[i3 + 0]) < 0.001 && Math.abs(vel[i3 + 2]) < 0.001) {
             const px = pred[i3 + 0]
             const pz = pred[i3 + 2]
@@ -261,7 +252,7 @@ export class PbfSolver {
         }
         vel[i3 + 1] = vy
 
-        // 床面での摩擦・減衰（滑らかに広がるように調整）
+        // 床面での摩擦（広がり具合の調整）
         vel[i3 + 0] *= 0.9
         vel[i3 + 2] *= 0.9
       }
