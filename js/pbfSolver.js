@@ -6,7 +6,7 @@ export class PbfSolver {
 
     // PBF のパラメータ
     this.density0 = 6378.0 //6378.0 // 目標密度 (Rest density)
-    this.solverIterations = 2 // 軽快に動かすため、反復回数を2回に最適化
+    this.solverIterations = 3 // 軽快に動かすため、反復回数を2回に最適化
     this.dt = 0.03 // タイムステップ（少し広げて速度感をアップ）
     this.gravity = -9.81 // 重力加速度 (Y軸下向き)
     this.eps = 600.0 // 密度制約の安定化パラメータ
