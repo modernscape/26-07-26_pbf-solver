@@ -19,10 +19,13 @@ export class ParticleSystem {
   initParticles() {
     let index = 0
     // 例: XとZは狭く、Y方向に長い直方体状に配置する
-    const sideX = 12
-    const sideY = 28
-    const sideZ = 12
-    const spacing = this.h * 0.5
+    // 2048個を綺麗に配置するための固定グリッド
+    // 16 × 16 × 8 = 2048個
+    const sideX = 16
+    const sideZ = 16
+    const sideY = 8 // ちゃんと8段の高さを持たせる
+
+    const spacing = 0.08 // 粒子同士の間隔を固定で狭すぎず広すぎず調整
 
     for (let x = 0; x < sideX; x++) {
       for (let y = 0; y < sideY; y++) {
@@ -30,15 +33,11 @@ export class ParticleSystem {
           if (index >= this.numParticles) break
 
           const i3 = index * 3
-          const noiseRange = spacing * 0.1
-          const offsetX = (Math.random() - 0.5) * noiseRange
-          const offsetY = (Math.random() - 0.5) * noiseRange
-          const offsetZ = (Math.random() - 0.5) * noiseRange
 
-          // 中心を基準に配置し、Y方向を上方に引き伸ばす
-          this.positions[i3 + 0] = (x - sideX / 2) * spacing + offsetX
-          this.positions[i3 + 1] = y * spacing + 1.0 + offsetY // 少し低い位置から高い柱状に
-          this.positions[i3 + 2] = (z - sideZ / 2) * spacing + offsetZ
+          // 中心を原点にして配置し、Y方向は上空（プラス側）に持ち上げる
+          this.positions[i3 + 0] = (x - sideX / 2) * spacing
+          this.positions[i3 + 1] = y * spacing + 1.5 // ★上空からスタート
+          this.positions[i3 + 2] = (z - sideZ / 2) * spacing
 
           this.velocities[i3 + 0] = 0
           this.velocities[i3 + 1] = 0

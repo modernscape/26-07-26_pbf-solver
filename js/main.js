@@ -6,8 +6,9 @@ import { SpatialHash } from "./spatialHash.js"
 import { PbfSolver } from "./pbfSolver.js"
 
 // 1. パラメータ設定
-const NUM_PARTICLES = 4096 // 16x16x16 = 4096個
-// const NUM_PARTICLES = 2048 // 16x16x16 = 4096個
+// const NUM_PARTICLES = 4096 // 16x16x16 = 4096個
+const NUM_PARTICLES = 2048 // 16x16x16 = 4096個
+// const NUM_PARTICLES = 1024 // 16x16x16 = 4096個
 const SMOOTHING_RADIUS = 0.2
 const CELL_SIZE = SMOOTHING_RADIUS
 

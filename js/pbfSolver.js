@@ -5,8 +5,8 @@ export class PbfSolver {
     this.hash = spatialHash
 
     // PBF のパラメータ
-    this.density0 = 10000 //6378.0 // 目標密度 (Rest density)
-    this.solverIterations = 3 // 軽快に動かすため、反復回数を2回に最適化
+    this.density0 = 1000 //6378.0 // 目標密度 (Rest density)
+    this.solverIterations = 5 // 軽快に動かすため、反復回数を2回に最適化
     this.dt = 0.03 // タイムステップ（少し広げて速度感をアップ）
     this.gravity = -9.81 // 重力加速度 (Y軸下向き)
     this.eps = 600.0 // 密度制約の安定化パラメータ
@@ -15,7 +15,7 @@ export class PbfSolver {
     this.c = 0.01
 
     // 境界ボックスのサイズ
-    this.boundSize = 1.5
+    this.boundSize = 1.0
     this.particleRadius = 0.1
 
     // カーネル用定数の事前計算
@@ -172,12 +172,12 @@ export class PbfSolver {
       }
     }
 
-    // 3. XSPH 粘性 (Viscosity) の適用
+    // 3. XSPH 粘性 (Viscosity) の適用（なめらかなブレンド）
     for (let i = 0; i < n; i++) {
       const i3 = i * 3
-      const px = pred[i3 + 0]
-      const py = pred[i3 + 1]
-      const pz = pred[i3 + 2]
+      const px = pos[i3 + 0] // pred ではなく現在の位置ベースでOK
+      const py = pos[i3 + 1]
+      const pz = pos[i3 + 2]
 
       let vxCorr = 0.0
       let vyCorr = 0.0
@@ -186,14 +186,15 @@ export class PbfSolver {
       this.hash.query(px, py, pz, (j) => {
         if (i === j) return
         const j3 = j * 3
-        const dx = pred[j3 + 0] - px
-        const dy = pred[j3 + 1] - py
-        const dz = pred[j3 + 2] - pz
+        const dx = pos[j3 + 0] - px
+        const dy = pos[j3 + 1] - py
+        const dz = pos[j3 + 2] - pz
         const r = Math.sqrt(dx * dx + dy * dy + dz * dz)
 
-        if (r < this.h) {
-          const rSq = r * r
-          const w = this._poly6(rSq)
+        if (r < this.h && r > 0.0) {
+          // 距離に反比例する滑らかな重み（1.0 - r/h）を使うことで、層を溶かす
+          const w = 1.0 - r / this.h
+
           vxCorr += (vel[j3 + 0] - vel[i3 + 0]) * w
           vyCorr += (vel[j3 + 1] - vel[i3 + 1]) * w
           vzCorr += (vel[j3 + 2] - vel[i3 + 2]) * w
