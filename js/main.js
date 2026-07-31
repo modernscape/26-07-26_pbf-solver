@@ -146,12 +146,12 @@ if (dropBtn) {
     for (let i = 0; i < dropCount; i++) {
       const targetIndex = nextInactiveIndex
       const i3 = targetIndex * 3
-      pos[i3 + 0] = (Math.random() - 0.5) * 0.1
+      pos[i3 + 0] = (Math.random() - 0.5) * 0.5
       pos[i3 + 1] = 0.8
-      pos[i3 + 2] = (Math.random() - 0.5) * 0.1
+      pos[i3 + 2] = (Math.random() - 0.5) * 0.5
 
       velocites[i3 + 0] = 0
-      velocites[i3 + 1] = -0.2
+      velocites[i3 + 1] = -0.1
       velocites[i3 + 2] = 0
 
       types[targetIndex] = 2 // 赤インク
