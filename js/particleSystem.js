@@ -14,6 +14,8 @@ export class ParticleSystem {
     this.deltaPositions = new Float32Array(numParticles * 3) // 位置の補正量 (dx, dy, dz)
 
     this.inkAmounts = new Float32Array(numParticles * 3)
+    this.particleTypes = new Int8Array(numParticles)
+    this.initialInactive = 500
 
     this.initParticles()
   }
@@ -52,6 +54,15 @@ export class ParticleSystem {
     }
 
     for (let i = 0; i < this.numParticles; i++) {
+      this.inkAmounts[i] = 0.0
+    }
+
+    for (let i = 0; i < this.numParticles; i++) {
+      if (i < this.numParticles - 500) {
+        this.particleTypes[i] = 1 // 水
+      } else {
+        this.particleTypes[i] = 0 // 非アクティブ
+      }
       this.inkAmounts[i] = 0.0
     }
   }

@@ -4,8 +4,8 @@ import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/cont
 import { ParticleSystem } from "./particleSystem.js"
 import { SpatialHash } from "./spatialHash.js"
 import { PbfSolver } from "./pbfSolver.js"
-import { vertexColor } from "three/tsl"
-import { ColladaLoader } from "three/examples/jsm/Addons.js"
+import { numWorkgroups, vertexColor } from "three/tsl"
+import { ColladaLoader, VelocityShader } from "three/examples/jsm/Addons.js"
 
 // 1. パラメータ設定
 // const NUM_PARTICLES = 4096 // 16x16x16 = 4096個
@@ -128,6 +128,42 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
+
+let nextInactiveIndex = NUM_PARTICLES - particleSystem.initialInactive
+const maxInactiveCount = particleSystem.initialInactive
+
+const dropBtn = document.getElementById("drop-ink-btn")
+if (dropBtn) {
+  dropBtn.addEventListener("click", () => {
+    console.log("drop!")
+
+    const pos = particleSystem.positions
+    const inks = particleSystem.inkAmounts
+    const velocites = particleSystem.velocities
+    const types = particleSystem.particleTypes
+
+    const dropCount = 3
+    for (let i = 0; i < dropCount; i++) {
+      const targetIndex = nextInactiveIndex
+      const i3 = targetIndex * 3
+      pos[i3 + 0] = (Math.random() - 0.5) * 0.1
+      pos[i3 + 1] = 0.8
+      pos[i3 + 2] = (Math.random() - 0.5) * 0.1
+
+      velocites[i3 + 0] = 0
+      velocites[i3 + 1] = -0.2
+      velocites[i3 + 2] = 0
+
+      types[targetIndex] = 2 // 赤インク
+      inks[targetIndex] = 1.0
+
+      nextInactiveIndex++
+      if (nextInactiveIndex >= NUM_PARTICLES) {
+        nextInactiveIndex = NUM_PARTICLES - maxInactiveCount
+      }
+    }
+  })
+}
 
 // 7. アニメーションループ
 function animate() {
