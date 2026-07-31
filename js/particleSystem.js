@@ -13,11 +13,14 @@ export class ParticleSystem {
     this.lambdas = new Float32Array(numParticles) // ラグランジュ乗数 (lambda)
     this.deltaPositions = new Float32Array(numParticles * 3) // 位置の補正量 (dx, dy, dz)
 
+    this.inkAmounts = new Float32Array(numParticles * 3)
+
     this.initParticles()
   }
 
   initParticles() {
     let index = 0
+
     // 例: XとZは狭く、Y方向に長い直方体状に配置する
     // 2048個を綺麗に配置するための固定グリッド
     // 16 × 16 × 8 = 2048個
@@ -46,6 +49,10 @@ export class ParticleSystem {
           index++
         }
       }
+    }
+
+    for (let i = 0; i < this.numParticles; i++) {
+      this.inkAmounts[i] = 0.0
     }
   }
 }

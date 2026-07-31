@@ -4,6 +4,8 @@ import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/cont
 import { ParticleSystem } from "./particleSystem.js"
 import { SpatialHash } from "./spatialHash.js"
 import { PbfSolver } from "./pbfSolver.js"
+import { vertexColor } from "three/tsl"
+import { ColladaLoader } from "three/examples/jsm/Addons.js"
 
 // 1. パラメータ設定
 // const NUM_PARTICLES = 4096 // 16x16x16 = 4096個
@@ -88,12 +90,21 @@ geometry.setAttribute(
   new THREE.BufferAttribute(particleSystem.positions, 3),
 )
 
+const colors = new Float32Array(NUM_PARTICLES * 3)
+for (let i = 0; i < NUM_PARTICLES; i++) {
+  colors[i * 3 + 0] = 0.0
+  colors[i * 3 + 1] = 0.67
+  colors[i * 3 + 2] = 1.0
+}
+geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3))
+
 // マテリアル (水のような青色)
 const material = new THREE.PointsMaterial({
-  color: 0x00abff,
+  // color: 0x00abff,
   size: 0.02,
   transparent: true,
   opacity: 0.8,
+  vertexColors: true,
 })
 
 const points = new THREE.Points(geometry, material)
@@ -124,6 +135,16 @@ function animate() {
 
   // 物理シミュレーションを1ステップ進める
   pbfSolver.step()
+
+  const colorAttr = geometry.attributes.color
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    const ink = particleSystem.inkAmounts[i]
+
+    colors[i * 3 + 0] = ink * 1.0 + (1.0 - ink) * 0.0
+    colors[i * 3 + 1] = ink * 0.0 + (1.0 - ink) * 0.67
+    colors[i * 3 + 2] = ink * 0.0 + (1.0 - ink) * 1.0
+  }
+  colorAttr.needsUpdate = true
 
   // 頂点座標が更新されたことを Three.js に通知して再描画させる
   geometry.attributes.position.needsUpdate = true
