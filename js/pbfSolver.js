@@ -54,6 +54,8 @@ export class PbfSolver {
     const dens = this.ps.densities
     const lambdas = this.ps.lambdas
     const deltaPos = this.ps.deltaPositions
+    const inks = this.ps.inkAmounts
+    const diffusionRate = 0.01
 
     // 1. 外力の適用 & 予測位置の計算
     for (let i = 0; i < n; i++) {
@@ -276,6 +278,56 @@ export class PbfSolver {
       pos[i3 + 0] = pred[i3 + 0]
       pos[i3 + 1] = pred[i3 + 1]
       pos[i3 + 2] = pred[i3 + 2]
+    }
+
+    // 色拡散
+    // 1. まず現在のインク濃度をコピーしておく
+    // 1. 一時バッファに現在のインク量をコピー
+    const nextInks = new Float32Array(inks)
+
+    for (let i = 0; i < n; i++) {
+      if (this.ps.particleTypes[i] === 0) continue
+
+      const i3 = i * 3
+      const xi = pos[i3 + 0]
+      const yi = pos[i3 + 1]
+      const zi = pos[i3 + 2]
+
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue
+        if (this.ps.particleTypes[j] === 0) continue
+
+        const j3 = j * 3
+        const dx = pos[j3 + 0] - xi
+        const dy = pos[j3 + 1] - yi
+        const dz = pos[j3 + 2] - zi
+        const distSq = dx * dx + dy * dy + dz * dz
+
+        const h = this.ps.h
+        if (distSq < h * h && distSq > 0.00001) {
+          const diff = inks[j] - inks[i]
+
+          // 【ポイント】赤の伝播を際立たせる（非対称な係数）
+          let transferRate = 0.01
+
+          if (diff > 0) {
+            // 周囲（j）の方が自分（i）より赤い場合：
+            // 赤い影響力を強くして、一気に自分の色を赤に引き上げる（赤 →→→ 水色）
+            transferRate = 0.08 // ここの数値を大きくすると赤の広がりが強くなります
+          } else {
+            // 自分の方が赤く、周囲が青い場合：
+            // 青が赤を薄める力は弱めにして、赤いままの領域を維持する（水色 → 赤 は控えめ）
+            transferRate = 0.01
+          }
+
+          nextInks[i] += diff * transferRate
+        }
+      }
+    }
+
+    // 最後に反映
+    for (let i = 0; i < n; i++) {
+      inks[i] = Math.max(0.0, Math.min(1.0, nextInks[i]))
     }
   }
 }
