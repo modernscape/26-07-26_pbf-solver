@@ -281,7 +281,6 @@ export class PbfSolver {
     }
 
     // 色拡散
-    // 1. まず現在のインク濃度をコピーしておく
     // 1. 一時バッファに現在のインク量をコピー
     const nextInks = new Float32Array(inks)
 
